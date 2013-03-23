@@ -6,9 +6,11 @@ import subprocess
 import datetime
 import os
 
+myLustreDirectory = "/lustre/scratch109/ensembl/dz1/"
+
 def parseArguments():
 	parser = argparse.ArgumentParser(description="A convenience function to write out Sanger Farm LSF commands")
-	parser.add_argument("--dir", "-d", metavar="DIR", dest = "output_dir", type=str, default="/lustre/scratch109/ensembl/dz1/farm_output", help="Directory where output files are dumped")
+	parser.add_argument("--dir", "-d", metavar="DIR", dest = "output_dir", type=str, default=myLustreDirectory, help="Directory where output files are dumped")
 	parser.add_argument("--mem", "-m", dest = "mem", type=int, default = 2, help="Required memory (GB)")
 	parser.add_argument("--queue", "-q", dest = "queue", default = "normal", type=str, help="LSF queue")
 	parser.add_argument("--name", "-n", dest = "name", type=str, help="Name of job or job array (default: automatic generation)")
