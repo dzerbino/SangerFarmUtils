@@ -1,0 +1,3 @@
+Small wrapper script to save Sanger Institute compute famr users some time when sending off LSF jobs. 
+
+In addition, automatically loads user's default .cshrc environment
