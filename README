@@ -1,3 +1,7 @@
-Small wrapper script to save Sanger Institute compute famr users some time when sending off LSF jobs. 
+Small wrapper script to save Sanger Institute compute farm users some time when sending off LSF jobs. 
+
+Define the environment variable LSF_DUMP as the lustre directory which by default collects your output and error files.
+
+For options: gsub --help
 
 In addition, automatically loads user's default .cshrc environment

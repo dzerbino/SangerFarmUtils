@@ -6,29 +6,32 @@ import subprocess
 import datetime
 import os
 
-myLustreDirectory = "/lustre/scratch109/ensembl/dz1/"
+if 'LSF_DUMP' in os.environ:
+	myLustreDirectory = os.environ['LSF_DUMP']
+else:
+	myLustreDirectory = '/dev/null'
 
 def parseArguments():
 	parser = argparse.ArgumentParser(description="A convenience function to write out Sanger Farm LSF commands")
-	parser.add_argument("--dir", "-d", metavar="DIR", dest = "output_dir", type=str, default=myLustreDirectory, help="Directory where output files are dumped")
-	parser.add_argument("--mem", "-m", dest = "mem", type=int, default = 2, help="Required memory (GB)")
-	parser.add_argument("--queue", "-q", dest = "queue", default = "normal", type=str, help="LSF queue")
+	parser.add_argument("--run", "-r", dest = "run", action='store_true', help="Print LSF command AND run the bsub command (default: off)")
+	parser.add_argument("--dir", "-d", metavar="DIR", dest = "output_dir", type=str, default=myLustreDirectory, help="Directory where output files are dumped (default: %s)" % myLustreDirectory)
+	parser.add_argument("--mem", "-m", dest = "mem", type=int, default = 2, help="Required memory (GB) (default: 2GB)")
+	parser.add_argument("--queue", "-q", dest = "queue", default = "normal", type=str, help="LSF queue (default: normal)")
+	parser.add_argument("--arraySize", "-a", metavar="ARRAY_SIZE", dest = "array", type=int, help="Size of job array (default: single job)")
+	parser.add_argument("--trashFiles", "-t", dest = "discard", action='store_true', help="Do not store output and error files (default: off)")
 	parser.add_argument("--name", "-n", dest = "name", type=str, help="Name of job or job array (default: automatic generation)")
-	parser.add_argument("--interactive", "-I", dest = "interactive", action='store_true', help="Interactive session")
-	parser.add_argument("--arraySize", "-a", metavar="ARRAY_SIZE", dest = "array", type=int, help="Size of job array")
-	parser.add_argument("--test", "-t", dest = "test", action='store_true', help="Print LSF command only, do no execute")
-	parser.add_argument("cmd", metavar="command", type=str, help="Command")
+	parser.add_argument("--interactive", "-I", dest = "interactive", action='store_true', help="Interactive session (default: off)")
+	parser.add_argument("cmd", metavar="command", type=str, nargs='+', help="Command")
 
 	return parser.parse_args()
 
 def defaultName(cmd):
 	now = datetime.datetime.now()
 
-	parts = cmd.split()
-	if parts[0] == 'perl' or parts[0] == 'python':
-	    name = parts[1]
+	if cmd[0] == 'perl' or cmd[0] == 'python':
+	    name = cmd[1]
 	else:
-	    name = parts[0]
+	    name = cmd[0]
 
 	return "_".join(map(str, [now.date(), now.time(), name]))
 
@@ -37,27 +40,37 @@ def formulateCommand(args):
 		args.name = defaultName(args.cmd)
 
 # Add in Java VM memory requirement:
-	args.cmd = re.sub('\<java\>', 'java -Xmx %i' % (args.mem * 1024), args.cmd)
+	if args.cmd[0] == 'java':
+		args.cmd = ['java','-Xmx',str(args.mem * 1024)] + args.cmd[1:]
 
 # default options
-	bsub_cmd = 'bsub -q %s -R"select[mem>%i000] rusage[mem=%i000]" -M%i000000' % (args.queue, args.mem, args.mem, args.mem)
+	bsub_cmd = "bsub -q %s -R' select[mem>%i000] rusage[mem=%i000] ' -M%i000000" % (args.queue, args.mem, args.mem, args.mem)
 
 # output options
 	if args.interactive: 
-	    output = "-Is -J " + name
+	    output = "-Is"
 	elif args.array is not None and args.array > 1: 
-	    output = "-o %s/%s.\%I.out -e %s/%s.\%I.err -J'%s[1-%i]'" % (args.output_dir, args.name, args.output_dir, args.name, args.name, args.array)
+	    output = "-o %s/%s.%%I.out -e %s/%s.%%I.err" % (args.output_dir, args.name, args.output_dir, args.name)
+        elif not args.discard:
+	    output = "-o %s/%s.out -e %s/%s.err" % (args.output_dir, args.name, args.output_dir, args.name)
 	else:
-	    output = "-o %s/%s.out -e %s/%s.err -J %s" % (args.output_dir, args.name, args.output_dir, args.name, args.name)
+	    output = ""
 
-	return " ".join([bsub_cmd, output, 'LSFwrapper.sh', "'", args.cmd, "'"])
+# naming the job
+	if args.array is not None and args.array > 1:
+	    name = "-J'%s[1-%i]'" % (args.name, args.array)
+	else:
+	    name = "-J " + name 
 
+	return " ".join([bsub_cmd, output, name, 'LSFwrapper.sh', "'", " ".join(args.cmd), "'"])
+
+# The overall script
 def main():
-	args = parseArguments
-	command = formulateCommand(parseArguments())
+	args = parseArguments()
+	command = formulateCommand(args)
 	print command
-	if not args.test:
-		subprocess.call(formulateCommand(args).split(' '))
+	if args.run:
+		subprocess.call(command, shell=True)
 
 if __name__ == "__main__":
 	main()
