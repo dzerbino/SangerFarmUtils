@@ -5,6 +5,7 @@ import re
 import subprocess
 import datetime
 import os
+import os.path
 
 if 'LSF_DUMP' in os.environ:
 	myLustreDirectory = os.environ['LSF_DUMP']
@@ -27,13 +28,18 @@ def parseArguments():
 
 def defaultName(cmd):
 	now = datetime.datetime.now()
+	time = now.time()
+	timeStr = ":".join(map(str, [time.hour, time.minute]))
+
+	# Flatten out command if contained in strings
+	cmd = sum([X.split(' ') for X in cmd], [])
 
 	if cmd[0] == 'perl' or cmd[0] == 'python':
 	    name = cmd[1]
 	else:
 	    name = cmd[0]
 
-	return "_".join(map(str, [now.date(), now.time(), name]))
+	return "_".join(map(str, [now.date(), timeStr, os.path.basename(name)]))
 
 def formulateCommand(args):
 	if args.name is None:
@@ -60,7 +66,7 @@ def formulateCommand(args):
 	if args.array is not None and args.array > 1:
 	    name = "-J'%s[1-%i]'" % (args.name, args.array)
 	else:
-	    name = "-J " + name 
+	    name = "-J " + args.name 
 
 	return " ".join([bsub_cmd, output, name, 'LSFwrapper.sh', "'", " ".join(args.cmd), "'"])
 
