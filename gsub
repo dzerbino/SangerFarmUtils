@@ -35,7 +35,7 @@ def defaultName(cmd):
 	# Flatten out command if contained in strings
 	cmd = sum([X.split(' ') for X in cmd], [])
 
-	if cmd[0] == 'perl' or cmd[0] == 'python' or cmd[0] == '':
+	if len(cmd) > 1 and (cmd[0] == 'perl' or cmd[0] == 'python' or cmd[0] == ''):
 	    name = cmd[1]
 	else:
 	    name = cmd[0]
@@ -56,7 +56,7 @@ def formulateCommand(args):
 # output options
 	if args.interactive: 
 	    output = "-Is"
-	elif args.array is not None and args.array > 1: 
+	elif args.array is not None: 
 	    output = "-o %s/%s.%%I.out -e %s/%s.%%I.err" % (args.output_dir, args.name, args.output_dir, args.name)
         elif not args.discard:
 	    output = "-o %s/%s.out -e %s/%s.err" % (args.output_dir, args.name, args.output_dir, args.name)
@@ -64,7 +64,7 @@ def formulateCommand(args):
 	    output = ""
 
 # naming the job
-	if args.array is not None and args.array > 1:
+	if args.array is not None:
 	    name = "-J'%s[1-%i]'" % (args.name, args.array)
 	else:
 	    name = "-J " + args.name 
