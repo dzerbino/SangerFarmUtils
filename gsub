@@ -16,7 +16,7 @@ def parseArguments():
 	parser = argparse.ArgumentParser(description="A convenience function to write out Sanger Farm LSF commands")
 	parser.add_argument("--run", "-r", dest = "run", action='store_true', help="Print LSF command AND run the bsub command (default: off)")
 	parser.add_argument("--dir", "-d", metavar="DIR", dest = "output_dir", type=str, default=myLustreDirectory, help="Directory where output files are dumped (default: %s)" % myLustreDirectory)
-	parser.add_argument("--mem", "-m", dest = "mem", type=int, default = 2, help="Required memory (GB) (default: 2GB)")
+	parser.add_argument("--mem", "-m", dest = "mem", type=float, default = 2, help="Required memory (GB) (default: 2GB)")
 	parser.add_argument("--procs", "-p", dest = "procs", type=int, default = 1, help="Required number of cores (default: 1)")
 	parser.add_argument("--queue", "-q", dest = "queue", default = "normal", type=str, help="LSF queue (default: normal)")
 	parser.add_argument("--arraySize", "-a", metavar="ARRAY_SIZE", dest = "array", type=int, help="Size of job array (default: single job)")
@@ -35,7 +35,7 @@ def defaultName(cmd):
 	# Flatten out command if contained in strings
 	cmd = sum([X.split(' ') for X in cmd], [])
 
-	if len(cmd) > 1 and (cmd[0] == 'perl' or cmd[0] == 'python' or cmd[0] == ''):
+	if len(cmd) > 1 and (cmd[0] == 'sh' or cmd[0] == 'perl' or cmd[0] == 'python' or cmd[0] == ''):
 	    name = cmd[1]
 	else:
 	    name = cmd[0]
@@ -51,7 +51,8 @@ def formulateCommand(args):
 		args.cmd = ['java','-Xmx',str(args.mem * 1024)] + args.cmd[1:]
 
 # default options
-	bsub_cmd = "bsub -q %s -R'select[mem>%i000] rusage[mem=%i000] span[hosts=1]' -M%i000 -n%i" % (args.queue, args.mem, args.mem, args.mem, args.procs)
+	kilos = int(args.mem * 1000)
+	bsub_cmd = "bsub -q %s -R'select[mem>%i] rusage[mem=%i] span[hosts=1]' -M%i -n%i" % (args.queue, kilos, kilos, kilos, args.procs)
 
 # output options
 	if args.interactive: 
