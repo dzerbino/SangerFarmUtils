@@ -18,7 +18,7 @@ def parseArguments():
 	parser.add_argument("--dir", "-d", metavar="DIR", dest = "output_dir", type=str, default=myLustreDirectory, help="Directory where output files are dumped (default: %s)" % myLustreDirectory)
 	parser.add_argument("--mem", "-m", dest = "mem", type=float, default = 2, help="Required memory (GB) (default: 2GB)")
 	parser.add_argument("--procs", "-p", dest = "procs", type=int, default = 1, help="Required number of cores (default: 1)")
-	parser.add_argument("--queue", "-q", dest = "queue", default = "normal", type=str, help="LSF queue (default: normal)")
+	parser.add_argument("--queue", "-q", dest = "queue", default = "production-rh74", type=str, help="LSF queue (default: normal)")
 	parser.add_argument("--arraySize", "-a", metavar="ARRAY_SIZE", dest = "array", type=int, help="Size of job array (default: single job)")
 	parser.add_argument("--trashFiles", "-t", dest = "discard", action='store_true', help="Do not store output and error files (default: off)")
 	parser.add_argument("--name", "-n", dest = "name", type=str, help="Name of job or job array (default: automatic generation)")
