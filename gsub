@@ -70,7 +70,7 @@ def formulateCommand(args):
 	else:
 	    name = "-J " + args.name 
 
-	return " ".join([bsub_cmd, output, name, 'LSFwrapper.sh', "'", " ".join(args.cmd), "'"])
+	return " ".join([bsub_cmd, output, name, "'", " ".join(args.cmd), "'"])
 
 # The overall script
 def main():
